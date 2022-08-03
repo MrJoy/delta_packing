@@ -8,6 +8,6 @@ curl --silent 'https://en.wikipedia.org/w/index.php?title=Transformers&limit=500
   if [ -e "raw/$VERSION" ]; then
     continue
   fi
-  echo "Fetching version ${VERSION}"
+  echo "Fetching version $VERSION"
   curl --silent "https://en.wikipedia.org/w/index.php?title=Transformers&action=raw&oldid=${VERSION}" > "raw/$VERSION"
 done
