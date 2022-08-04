@@ -5,6 +5,8 @@ POOL_SIZE = 8 # Number of threads to use for parallel processing
 
 desc "Compute delta chain"
 task :compute_deltas do
+  # require "rb-bsdiff"
+
   versions = FileList['raw/*'].map { |f| f.split('/').last.to_i }.sort
 
   puts "Computing deltas for #{versions.size} versions"
@@ -28,6 +30,7 @@ task :compute_deltas do
           src_file    = "raw/#{candidate_ver}"
           target_file = "raw/#{target_ver}"
           out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.bsdiff"
+          # BSDiff.diff(src_file, target_file, out_file)
           system "bsdiff #{src_file} #{target_file} #{out_file}" # Using system to avoid noisy output
         end
 
