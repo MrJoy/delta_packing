@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-DELTA_LIMIT = 9 # Pretty sure delta.sh has a bug and is only looking at 9 items + self...
+DELTA_LIMIT = 100 # Pretty sure delta.sh has a bug and is only looking at 9 items + self...
 POOL_SIZE = 8 # Number of threads to use for parallel processing
 
 desc "Compute delta chain"
