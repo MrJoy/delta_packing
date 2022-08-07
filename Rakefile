@@ -23,7 +23,7 @@ task :compute_deltas do
         break if !job
         target_ver, candidate_vers = *job
 
-        if File.exists?("delta/#{target_ver}") || FileList["delta/*_#{target_ver}.bsdiff"].size > 0
+        if File.exists?("delta/#{target_ver}") || FileList["delta/*_#{target_ver}.patch"].size > 0
           # puts "Skipping #{target_ver} because it already has a delta"
           next
         end
@@ -33,9 +33,11 @@ task :compute_deltas do
         candidate_vers.each do |candidate_ver|
           src_file    = "raw/#{candidate_ver}"
           target_file = "raw/#{target_ver}"
-          out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.bsdiff"
+          out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.patch"
           # BSDiff.diff(src_file, target_file, out_file)
-          system "bsdiff #{src_file} #{target_file} #{out_file}" # Using system to avoid noisy output
+          # N.B. # Using system to avoid noisey output
+          # system "bsdiff #{src_file} #{target_file} #{out_file}"
+          system "diff --unified=1 #{src_file} #{target_file} > #{out_file}"
         end
 
         candidate_files = FileList["candidate_#{thread_id}/*"]
