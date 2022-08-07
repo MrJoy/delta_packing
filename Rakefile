@@ -40,8 +40,8 @@ task :compute_deltas do
 
           candidate_diffs.map! do |diff|
             ver = diff.match(/^--- raw\/(?<ver>\d+)/)[:ver]
-            diff.sub!(/^--- raw\/\d+/, '--- source')
-            diff.sub!(/^\+\+\+ raw\/\d+/, '+++ dest')
+            diff.sub!(/^--- raw\/.*?\n/, "")
+            diff.sub!(/^\+\+\+ raw\/.*?\n/, "")
             [ver, diff]
           end
 
