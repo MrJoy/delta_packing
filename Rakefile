@@ -35,7 +35,7 @@ task :compute_deltas do
           puts "Found identical candidate for #{target_ver}: #{best_candidate}"
           File.write("delta/#{best_candidate}_#{target_ver}.patch", "")
         else
-          candidates_raw = `diff --minimal --unified=1 --to-file=#{target_file} #{candidate_files}`
+          candidates_raw = `diff --minimal --unified=0 --to-file=#{target_file} #{candidate_files}`
           candidate_diffs = candidates_raw.split(/(?=^--- )/)
 
           candidate_diffs.map! do |diff|
