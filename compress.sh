@@ -2,28 +2,33 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Compression results for 3,715 versions of the Transformers article, downloaded as just wikitext
+# Compression results for 3,717 versions of the Transformers article, downloaded as just wikitext
 # are as follows:
 #
-# For the delta chain (initial ver + bsdiff snapshots):
-# -rw-r--r--   1 jonathonfrisby  staff    5111808 Aug  3 16:29 delta.tar
-# -rw-r--r--   1 jonathonfrisby  staff    1706877 Aug  3 16:33 delta.tar.bz2
-# -rw-r--r--   1 jonathonfrisby  staff    1883513 Aug  3 16:33 delta.tar.lz4
-# -rw-r--r--   1 jonathonfrisby  staff    1571222 Aug  3 16:33 delta.tar.lzip
-# -rw-r--r--   1 jonathonfrisby  staff    1582158 Aug  3 16:33 delta.tar.pzstd
-# -rw-r--r--   1 jonathonfrisby  staff    1571420 Aug  3 16:33 delta.tar.xz
+# For the delta chain (initial ver + diff (minimal, unified, 0-context) snapshots):
+# % ls -laS out/delta*
+# -rw-r--r--  1 jonathonfrisby  staff  9393664 Aug  7 16:02 out/delta.tar
+# -rw-r--r--  1 jonathonfrisby  staff  1342244 Aug  7 16:05 out/delta.tar.lz4
+# -rw-r--r--  1 jonathonfrisby  staff   596644 Aug  7 16:05 out/delta.tar.bz2
+# -rw-r--r--  1 jonathonfrisby  staff   268442 Aug  7 16:13 out/delta.tar.zstd_1
+# -rw-r--r--  1 jonathonfrisby  staff   259151 Aug  7 16:13 out/delta.tar.zstd_0
+# -rw-r--r--  1 jonathonfrisby  staff   248564 Aug  7 16:05 out/delta.tar.xz
+# -rw-r--r--  1 jonathonfrisby  staff   247763 Aug  7 16:05 out/delta.tar.lzip
 #
 # For the raw data:
-# -rw-r--r--   1 jonathonfrisby  staff  154850816 Aug  3 16:29 raw.tar
-# -rw-r--r--   1 jonathonfrisby  staff    9512410 Aug  3 16:34 raw.tar.bz2
-# -rw-r--r--   1 jonathonfrisby  staff   19959772 Aug  3 16:34 raw.tar.lz4
-# -rw-r--r--   1 jonathonfrisby  staff     348775 Aug  3 16:35 raw.tar.lzip
-# -rw-r--r--   1 jonathonfrisby  staff     311237 Aug  3 16:34 raw.tar.pzstd
-# -rw-r--r--   1 jonathonfrisby  staff     313196 Aug  3 16:34 raw.tar.xz
+# % ls -laS out/raw*
+# -rw-r--r--  1 jonathonfrisby  staff  154996224 Aug  7 16:02 out/raw.tar
+# -rw-r--r--  1 jonathonfrisby  staff   20021279 Aug  7 16:07 out/raw.tar.lz4
+# -rw-r--r--  1 jonathonfrisby  staff    9531127 Aug  7 16:07 out/raw.tar.bz2
+# -rw-r--r--  1 jonathonfrisby  staff     349469 Aug  7 16:08 out/raw.tar.lzip
+# -rw-r--r--  1 jonathonfrisby  staff     313540 Aug  7 16:07 out/raw.tar.xz
+# -rw-r--r--  1 jonathonfrisby  staff     311031 Aug  7 16:08 out/raw.tar.zstd_0
+# -rw-r--r--  1 jonathonfrisby  staff     298842 Aug  7 16:11 out/raw.tar.zstd_1
 #
 # Early testing with a small number of versions (52) had lzip as the unambiguous winner in all
 # cases.  With a significantly larger dataset, ztsd and xz both beat lzip on the raw dataset by
-# about 10% -- but not on the delta chain dataset.
+# about 10% -- but not on the delta chain dataset.  Despite moving away from bsdiff (which does
+# bzip2 compression of its own), lzip continues to the be the winnder for the delta chain.
 # for ARCHIVE in $(cd out; ls *.tar); do
 #   echo "Compressing out/${ARCHIVE}"
 
