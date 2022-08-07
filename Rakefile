@@ -3,6 +3,8 @@
 DELTA_LIMIT = 100 # Pretty sure delta.sh has a bug and is only looking at 9 items + self...
 POOL_SIZE = 8 # Number of threads to use for parallel processing
 
+FileList["lib/tasks/**/*.rake"].each { |fname| load fname }
+
 desc "Compute delta chain"
 task :delta do
   versions = FileList["raw/*"].map { |f| f.split("/").last.to_i }.sort.map(&:to_s)
