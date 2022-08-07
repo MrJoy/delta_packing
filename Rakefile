@@ -33,7 +33,7 @@ task :compute_deltas do
           src_file    = "raw/#{candidate_ver}"
           out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.patch"
           # N.B. Using system to avoid noisey output
-          system "diff --unified=1 #{src_file} #{target_file} > #{out_file}"
+          system "diff --minimal --unified=1 #{src_file} #{target_file} | perl -pse 's|^--- #{src_file}|--- source|' | perl -pse 's|^\\+{3} #{target_file}|+++ dest|' > #{out_file}"
         end
 
         candidate_files = FileList["candidate_#{thread_id}/*"]
