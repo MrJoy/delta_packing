@@ -36,9 +36,8 @@ IFS=$'\n\t'
 #   cat "out/$ARCHIVE" | lz4 --best --sparse > "out/${ARCHIVE}.lz4"
 #   cat "out/$ARCHIVE" | bzip2 -9 > "out/${ARCHIVE}.bz2"
 #   cat "out/$ARCHIVE" | lzip -9 --match-length=273 > "out/${ARCHIVE}.lzip"
-#   cat "out/$ARCHIVE" | zstd --ultra -22 --long=31 --force --stdout > "out/${ARCHIVE}.zstd_0"
-#   cat "out/$ARCHIVE" | zstd --ultra -22 --long=31 --compress-literals --target-compressed-block-size=131072 --force --stdout > "out/${ARCHIVE}.zstd_1"
-#   cat "out/$ARCHIVE" | zstd --ultra -22 --long=31 --no-compress-literals --stream-size=$(wc -c "out/$ARCHIVE") --force --stdout > "out/${ARCHIVE}.zstd_2"
+#   cat "out/$ARCHIVE" | zstd --ultra -22 --long=31 --compress-literals --target-compressed-block-size=131072 --force --stdout > "out/${ARCHIVE}.zstd_0"
+#   cat "out/$ARCHIVE" | zstd --ultra -22 --long=31 --no-compress-literals --stream-size=$(wc -c "out/$ARCHIVE") --force --stdout > "out/${ARCHIVE}.zstd_1"
 # done
 
 echo "Compressing out/delta.tar"
