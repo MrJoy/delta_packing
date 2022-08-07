@@ -6,8 +6,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby File.read(".ruby-version").chomp
 
 # rubocop:disable Bundler/GemVersion
-gem "rake"
 gem "pry"
+gem "rake"
 # rubocop:enable Bundler/GemVersion
 
 ################################################################################
