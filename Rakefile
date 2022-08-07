@@ -9,13 +9,10 @@ task :compute_deltas do
 
   puts "Computing deltas for #{versions.size} versions"
 
-  system "rm -f candidate_*/*" # Using system to avoid noisy output
-
   work_queue = Queue.new
   thread_pool = (1..POOL_SIZE).map do |i|
     Thread.new do
       thread_id = i
-      mkdir_p "candidate_#{thread_id}"
       loop do
         job = work_queue.pop
         break if !job
@@ -29,24 +26,35 @@ task :compute_deltas do
         puts "Computing delta candidates for #{target_ver}"
 
         target_file = "raw/#{target_ver}"
-        candidate_vers.each do |candidate_ver|
-          src_file    = "raw/#{candidate_ver}"
-          out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.patch"
-          # N.B. Using system to avoid noisey output
-          res = system("diff --minimal --unified=1 #{src_file} #{target_file} | perl -pse 's|^--- #{src_file}|--- source|' | perl -pse 's|^\\+{3} #{target_file}|+++ dest|' > #{out_file}")
-          if !res
-            STDERR.puts("Failed to compute delta for #{target_ver} -> #{candidate_ver}")
-            exit(1)
-          end
-        end
 
-        candidate_files = FileList["candidate_#{thread_id}/*"]
-                          .map { |f| [File.stat(f).size, f] }
-                          .sort
-                          .map(&:last)
-        best_candidate = candidate_files[0]
-        cp best_candidate, "delta/"
-        system "rm -f candidate_#{thread_id}/*" # Using system to avoid noisy output
+        candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(' ')
+
+        # TODO: See if it's faster to just do MD5s or some such here...
+        nmf_raw = `diff --unified=1 --brief --to-file=#{target_file} #{candidate_files}`
+        nmf_lines = nmf_raw.split("\n").map(&:chomp)
+        non_matching_versions = nmf_lines.map { |line| line.split(' ', 3)[1].split('/').last }
+        zeros = candidate_vers - non_matching_versions
+        if zeros.length > 0
+          best_candidate = zeros.first
+          puts "Found identical candidate for #{target_ver}: #{best_candidate}"
+          File.write("delta/#{best_candidate}_#{target_ver}.patch", "")
+        else
+          candidates_raw = `diff --minimal --unified=1 --to-file=#{target_file} #{candidate_files}`
+          candidate_diffs = candidates_raw.split(/(?=^--- )/)
+
+          candidate_diffs.map! do |diff|
+            ver = diff.match(/^--- raw\/(?<ver>\d+)/)[:ver]
+            diff.sub!(/^--- raw\/\d+/, '--- source')
+            diff.sub!(/^\+\+\+ raw\/\d+/, '+++ dest')
+            [ver, diff]
+          end
+
+          candidate_diffs.sort_by! { |(ver, diff)| diff.length } # TODO: Do linear search.
+          best_ver = candidate_diffs[0].first
+          best_diff = candidate_diffs[0].last
+          puts "Creating patch for #{target_ver} from: #{best_ver}"
+          File.write("delta/#{best_ver}_#{target_ver}.patch", best_diff)
+        end
       end
     end
   end
@@ -74,5 +82,4 @@ task :compute_deltas do
   puts "Waiting for threads to finish"
   POOL_SIZE.times { work_queue.push(false) }
   thread_pool.each(&:join)
-  system "rm -rf candidate_*/" # Using system to avoid noisy output
 end
