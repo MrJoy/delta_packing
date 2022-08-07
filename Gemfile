@@ -5,8 +5,6 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby File.read(".ruby-version").chomp
 
-gem "rb-bsdiff", "~> 0.1.1"
-
 # rubocop:disable Bundler/GemVersion
 gem "rake"
 gem "pry"
