@@ -7,7 +7,7 @@ time ./pull.sh
 echo
 
 echo "Computing diffs..."
-time ./delta.sh
+time rake compute_deltas
 echo
 
 echo "Build tarballs..."
