@@ -1,0 +1,256 @@
+####################################################################################################
+# Global Config
+####################################################################################################
+# https://github.com/bbatsov/rubocop/blob/master/config/default.yml
+require:
+  - rubocop-eightyfourcodes
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rubycw
+  - rubocop-thread_safety
+
+AllCops:
+  DisplayCopNames: true
+  DisplayStyleGuide: true
+  ExtraDetails: true
+  EnabledByDefault: true
+  Exclude:
+  - raw/**/*
+  - delta/**/*
+  - out/**/*
+
+
+####################################################################################################
+# Layout Cops
+# https://docs.rubocop.org/en/stable/cops_layout/
+####################################################################################################
+Layout/CommentIndentation:
+  Enabled: false
+
+Layout/EmptyLineBetweenDefs:
+  AllowAdjacentOneLineDefs: true
+
+Layout/FirstMethodArgumentLineBreak:
+  Enabled: false
+
+Layout/HashAlignment:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+
+Layout/LineLength:
+  Max: 100
+
+Layout/RedundantLineBreak:
+  # We want to allow formatting things for readability.
+  Enabled: false
+
+Layout/SingleLineBlockChain:
+  # At the time of writing (2021-05-07), this rule is producing a lot of noise on code I don't think
+  # benefits from the recommended changes, and the automated fixes are producing code that breaks
+  # other rules, due in no small part to bugs.  E.G. continuing a statement on the next line but
+  # _not indenting it at all_.
+  Enabled: false
+
+####################################################################################################
+# Lint Cops
+# https://docs.rubocop.org/en/stable/cops_lint/
+####################################################################################################
+Lint/ConstantResolution:
+  Enabled: false
+
+# I really don't want to do this, but I'm faced with an annoying problem: The annotate gem can
+# litter models/specs/factories with lines that are pretty arbitrarily long.  I can tell annotate to
+# prefix/suffix _all_ the blocks it generates with disable markers for Layout/LineLength, but only
+# some of the blocks will _need_ that, leading to failures on this cop.  If, instead, I add the
+# disable markers where needed causes annotate to become rather confused when it rewrites a block
+# that has them:  It tends to leave both the markers above the newly-written block.
+# So my choices basically come down to:
+# 1. Do nothing, and just have unresolves Layout/LineLength errors in a bunch of places.
+# 2. Manually put markers where needed, and manually correct what annotate does to the files where
+#    they're needed.
+# 3. Disable Layout/LineLength for the relevant files, try to remember to add exceptions when new
+#    cases arise, and try to remember to manually keep an eye on line length for code in those files
+# So, with that in mind, I'm taking what I feel is the lesser of several evils:
+Lint/RedundantCopDisableDirective:
+  Enabled: false
+
+
+####################################################################################################
+# Metric Cops
+# https://docs.rubocop.org/en/stable/cops_metrics/
+####################################################################################################
+Metrics/AbcSize:
+  Max: 30
+
+Metrics/BlockLength:
+  Exclude:
+  - spec/**/*
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Metrics/MethodLength:
+  Max: 20
+  CountComments: false
+  Exclude:
+  - spec/support/**/*
+
+
+####################################################################################################
+# Migration Cops
+# https://docs.rubocop.org/en/stable/cops_migration/
+####################################################################################################
+
+
+####################################################################################################
+# Naming Cops
+# https://docs.rubocop.org/en/stable/cops_naming/
+####################################################################################################
+
+
+####################################################################################################
+# Security Cops
+# https://docs.rubocop.org/en/stable/cops_security/
+####################################################################################################
+
+
+####################################################################################################
+# Style Cops
+# https://docs.rubocop.org/en/stable/cops_style/
+####################################################################################################
+Style/AsciiComments:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  EnforcedStyle: compact
+
+Style/ConstantVisibility:
+  Enabled: false
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Style/Copyright:
+  Enabled: false
+
+Style/DisableCopsWithinSourceCodeDirective:
+  Enabled: false
+
+Style/Documentation:
+  Exclude:
+  - spec/support/**/*
+
+Style/DocumentationMethod:
+  Enabled: false
+
+# I happen to like the truthiness operator (`!!`)...
+Style/DoubleNegation:
+  Enabled: false
+
+Style/FormatString:
+  EnforcedStyle: sprintf
+
+Style/ImplicitRuntimeError:
+  Exclude:
+  - spec/spec_helper.rb
+  - spec/support/*
+
+Style/InlineComment:
+  Enabled: false
+
+Style/MethodCalledOnDoEndBlock:
+  Exclude:
+  - spec/**/*.rb
+
+Style/MethodCallWithArgsParentheses:
+  EnforcedStyle: require_parentheses
+  AllowedPatterns:
+  # Keywords:
+  - exit
+  - puts
+  - raise
+  - require
+  - require_relative
+  # Rake:
+  - desc
+  - namespace
+  - task
+  # Brew Bundler
+  - brew
+  - cask
+  - cask_args
+  - mas
+  - tap
+  - whalebrew
+  # IncludedMacros:
+  Exclude:
+  - Gemfile
+
+Style/MissingElse:
+  Enabled: false
+
+Style/OpenStructUse:
+  Exclude:
+  - spec/**/*.rb
+
+Style/SingleLineMethods:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+Style/TopLevelMethodDefinition:
+  # At time of writing, this is choking on basically every line of code.  `require` statements,
+  # assignments to variables -- everything.
+  Enabled: false
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+####################################################################################################
+# Bundler Cops
+# https://docs.rubocop.org/en/stable/cops_bundler/
+####################################################################################################
+Bundler/GemComment:
+  Enabled: false
+
+
+####################################################################################################
+# Gemspec Cops
+# https://docs.rubocop.org/en/stable/cops_gemspec/
+####################################################################################################
+
+
+####################################################################################################
+# Thread Safety Cops
+# https://github.com/covermymeds/rubocop-thread_safety/tree/master/lib/rubocop/cop/thread_safety
+####################################################################################################
+
+
+####################################################################################################
+# Performance Cops
+# https://docs.rubocop.org/projects/performance/en/stable/cops_performance/
+####################################################################################################
+Performance/OpenStruct:
+  Exclude:
+  - spec/**/*
+
+
+####################################################################################################
+# FactoryBot Cops (Part of RSpec Plugin)
+# https://docs.rubocop.org/projects/rspec/en/latest/cops_factorybot/
+####################################################################################################
+
+
+####################################################################################################
+# Rake Cops
+# https://github.com/rubocop-hq/rubocop-rake/tree/master/lib/rubocop/cop/rake
+####################################################################################################
+Rake/Desc:
+  Enabled: false
