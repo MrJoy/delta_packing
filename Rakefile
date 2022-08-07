@@ -63,7 +63,7 @@ task :compute_deltas do
       next
     end
 
-    candidate_vers = versions[0..(counter - 2)] # Don't include the target version!
+    candidate_vers = versions[0..(counter - 1)]
     candidate_vers = candidate_vers[-DELTA_LIMIT..-1] if candidate_vers.length > DELTA_LIMIT
     work_queue.push([target_ver, candidate_vers])
 
