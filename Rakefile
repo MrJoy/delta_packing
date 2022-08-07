@@ -57,8 +57,13 @@ task :compute_deltas do
           candidate_diffs.sort_by! { |(ver, diff)| diff.length } # TODO: Do linear search.
           best_ver = candidate_diffs[0].first
           best_diff = candidate_diffs[0].last
-          puts "Creating patch for #{target_ver} from: #{best_ver}"
-          File.write("delta/#{best_ver}_#{target_ver}.patch", best_diff)
+          if best_diff.size < File.stat(target_file).size
+            puts "Creating patch for #{target_ver} from: #{best_ver}"
+            File.write("delta/#{best_ver}_#{target_ver}.patch", best_diff)
+          else
+            puts "No good delta for #{target_ver}, copying it as-is"
+            cp(target_file, "delta/#{target_ver}")
+          end
         end
       end
     end
