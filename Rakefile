@@ -7,7 +7,7 @@ FileList["lib/tasks/**/*.rake"].each { |fname| load fname }
 
 desc "Compute delta chain"
 task :delta do
-  versions = FileList["raw/*"].map { |f| f.split("/").last.to_i }.sort.map(&:to_s)
+  versions = FileList["raw/*"].map { |f| Integer(f.split("/").last, 10) }.sort.map(&:to_s)
 
   puts "Computing deltas for #{versions.size} versions"
 
@@ -41,9 +41,12 @@ task :delta do
           candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(" ")
 
           target_sha = version_shas[target_ver]
-          target_ver_i = target_ver.to_i
-          zeros = sha_versions[target_sha].reject { |v| v == target_ver || v.to_i > target_ver_i }
-          if zeros.length > 0
+          target_ver_i = Integer(target_ver, 10)
+          zeros =
+            sha_versions[target_sha].reject do |v|
+              v == target_ver || Integer(v, 10) > target_ver_i
+            end
+          if zeros.length.positive?
             best_candidate = zeros.first
             puts("Found identical candidate for #{target_ver}: #{best_candidate}")
             File.write("delta/#{best_candidate}_#{target_ver}.patch", "")
@@ -91,7 +94,7 @@ task :delta do
     init_dst = "delta/#{target_ver}"
     # TODO: We can speed this up by getting the list of all existing deltas once and using it to
     # TODO: determine what we don't need to compute.
-    if File.exist?(init_dst) || FileList["delta/*_#{target_ver}.patch"].size > 0
+    if File.exist?(init_dst) || FileList["delta/*_#{target_ver}.patch"].size.positive?
       # Found where we left off, so we can bail.
       break
     end
@@ -103,7 +106,7 @@ task :delta do
       next
     end
 
-    if File.stat("raw/#{target_ver}").size == 0
+    if File.stat("raw/#{target_ver}").size.zero?
       puts "Found zero-length file, marking it accordingly: #{target_ver}"
       File.write("delta/#{target_ver}", "")
     else
