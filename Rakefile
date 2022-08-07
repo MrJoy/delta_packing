@@ -18,11 +18,6 @@ task :compute_deltas do
         break if !job
         target_ver, candidate_vers = *job
 
-        if File.exists?("delta/#{target_ver}") || FileList["delta/*_#{target_ver}.patch"].size > 0
-          # puts "Skipping #{target_ver} because it already has a delta"
-          next
-        end
-
         puts "Computing delta candidates for #{target_ver}"
 
         target_file = "raw/#{target_ver}"
@@ -62,10 +57,18 @@ task :compute_deltas do
   # TODO: If we go over this in reverse, we can bail as soon as we see a delta for a version.
   counter = 0
   loop do
+    break if counter >= versions.size
     target_ver = versions[counter]
+
+    init_dst = "delta/#{target_ver}"
+    if File.exists?(init_dst) || FileList["delta/*_#{target_ver}.patch"].size > 0
+      # puts "Skipping #{target_ver} because it already has a delta"
+      counter += 1
+      next
+    end
+
     if counter == 0
-      dst = "delta/#{target_ver}"
-      cp("raw/#{target_ver}", dst) unless File.exists?(dst)
+      cp("raw/#{target_ver}", init_dst)
 
       counter += 1
       next
@@ -76,7 +79,6 @@ task :compute_deltas do
     work_queue.push([target_ver, candidate_vers])
 
     counter += 1
-    break if counter >= versions.size
   end
 
   puts "Waiting for threads to finish"
