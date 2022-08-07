@@ -62,6 +62,8 @@ task :compute_deltas do
     target_ver = versions[counter]
 
     init_dst = "delta/#{target_ver}"
+    # TODO: We can speed this up by getting the list of all existing deltas once and using it to
+    # TODO: determine what we don't need to compute.
     if File.exists?(init_dst) || FileList["delta/*_#{target_ver}.patch"].size > 0
       # Found where we left off, so we can bail.
       break
