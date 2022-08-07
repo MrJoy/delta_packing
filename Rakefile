@@ -6,6 +6,7 @@ POOL_SIZE = 8 # Number of threads to use for parallel processing
 FileList["lib/tasks/**/*.rake"].each { |fname| load fname }
 
 desc "Compute delta chain"
+# rubocop:disable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
 task :delta do
   versions = FileList["raw/*"].map { |f| Integer(f.split("/").last, 10) }.sort.map(&:to_s)
 
@@ -121,3 +122,4 @@ task :delta do
   POOL_SIZE.times { work_queue.push(false) }
   thread_pool.each(&:join)
 end
+# rubocop:enable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
