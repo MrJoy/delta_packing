@@ -28,9 +28,9 @@ task :compute_deltas do
 
         puts "Computing delta candidates for #{target_ver}"
 
+        target_file = "raw/#{target_ver}"
         candidate_vers.each do |candidate_ver|
           src_file    = "raw/#{candidate_ver}"
-          target_file = "raw/#{target_ver}"
           out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.patch"
           # N.B. Using system to avoid noisey output
           system "diff --unified=1 #{src_file} #{target_file} > #{out_file}"
