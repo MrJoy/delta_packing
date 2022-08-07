@@ -17,6 +17,7 @@ task :compute_deltas do
         job = work_queue.pop
         break if !job
         target_ver, candidate_vers = *job
+        # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
 
         puts "Computing delta candidates for #{target_ver}"
 
@@ -54,28 +55,26 @@ task :compute_deltas do
     end
   end
 
-  # TODO: If we go over this in reverse, we can bail as soon as we see a delta for a version.
   counter = 0
+  versions = versions.reverse
   loop do
     break if counter >= versions.size
     target_ver = versions[counter]
 
     init_dst = "delta/#{target_ver}"
     if File.exists?(init_dst) || FileList["delta/*_#{target_ver}.patch"].size > 0
-      # puts "Skipping #{target_ver} because it already has a delta"
-      counter += 1
-      next
+      # Found where we left off, so we can bail.
+      break
     end
 
-    if counter == 0
+    if counter == versions.size - 1
       cp("raw/#{target_ver}", init_dst)
 
       counter += 1
       next
     end
 
-    candidate_vers = versions[0..(counter - 1)]
-    candidate_vers = candidate_vers[-DELTA_LIMIT..-1] if candidate_vers.length > DELTA_LIMIT
+    candidate_vers = versions[(counter+1)..(counter+1+DELTA_LIMIT)]
     work_queue.push([target_ver, candidate_vers])
 
     counter += 1
