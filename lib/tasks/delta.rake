@@ -3,13 +3,7 @@
 DELTA_LIMIT = 100 # Pretty sure delta.sh has a bug and is only looking at 9 items + self...
 POOL_SIZE = 8 # Number of threads to use for parallel processing
 
-desc "Compute delta chain"
-# rubocop:disable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
-task :delta do
-  versions = FileList["raw/*"].map { |f| Integer(f.split("/").last, 10) }.sort.map(&:to_s)
-
-  puts "Computing deltas for #{versions.size} versions"
-
+def sha_data_for_dir(dir)
   version_shas = nil
   sha_versions = {}
   cd "raw" do
@@ -21,6 +15,69 @@ task :delta do
     end
   end
 
+  [version_shas, sha_versions]
+end
+
+def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
+  # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
+
+  puts("Computing delta candidates for #{target_ver}")
+
+  target_file = "raw/#{target_ver}"
+
+  candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(" ")
+
+  target_sha = version_shas[target_ver]
+  target_ver_i = Integer(target_ver, 10)
+  zeros =
+    sha_versions[target_sha].reject do |v|
+      v == target_ver || Integer(v, 10) > target_ver_i
+    end
+  if zeros.length.positive?
+    best_candidate = zeros.first
+    puts("Found identical candidate for #{target_ver}: #{best_candidate}")
+    File.write("delta/#{best_candidate}_#{target_ver}.patch", "")
+  else
+    candidates_raw = `diff --minimal --unified=0 --to-file=#{target_file} #{candidate_files}`
+    candidate_diffs = candidates_raw.split(/(?=^--- )/)
+
+    candidate_diffs.map! do |diff|
+      ver = diff.match(%r{^--- raw/(?<ver>\d+)})[:ver]
+      diff.sub!(%r{^--- raw/.*?\n}, "")
+      diff.sub!(%r{^\+\+\+ raw/.*?\n}, "")
+      [ver, diff]
+    end
+
+    best_ver = candidate_diffs[0].first
+    best_diff = candidate_diffs[0].last
+    best_diff_size = candidate_diffs[0].last.size
+    candidate_diffs.each do |(ver, diff)|
+      next unless diff.size <= best_diff_size
+
+      best_ver = ver
+      best_diff = diff
+      best_diff_size = diff.size
+    end
+
+    if best_diff.size < File.stat(target_file).size
+      puts("Creating patch for #{target_ver} from: #{best_ver}")
+      File.write("delta/#{best_ver}_#{target_ver}.patch", best_diff)
+    else
+      puts("No good delta for #{target_ver}, copying it as-is")
+      cp(target_file, "delta/#{target_ver}")
+    end
+  end
+end
+
+desc "Compute delta chain"
+# rubocop:disable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
+task :delta do
+  versions = FileList["raw/*"].map { |f| Integer(f.split("/").last, 10) }.sort.map(&:to_s)
+
+  puts "Computing deltas for #{versions.size} versions"
+
+  version_shas, sha_versions = sha_data_for_dir("raw")
+
   work_queue = Queue.new
   thread_pool =
     (1..POOL_SIZE).map do |i|
@@ -31,54 +88,7 @@ task :delta do
           break unless job
 
           target_ver, candidate_vers = *job
-          # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
-
-          puts("Computing delta candidates for #{target_ver}")
-
-          target_file = "raw/#{target_ver}"
-
-          candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(" ")
-
-          target_sha = version_shas[target_ver]
-          target_ver_i = Integer(target_ver, 10)
-          zeros =
-            sha_versions[target_sha].reject do |v|
-              v == target_ver || Integer(v, 10) > target_ver_i
-            end
-          if zeros.length.positive?
-            best_candidate = zeros.first
-            puts("Found identical candidate for #{target_ver}: #{best_candidate}")
-            File.write("delta/#{best_candidate}_#{target_ver}.patch", "")
-          else
-            candidates_raw = `diff --minimal --unified=0 --to-file=#{target_file} #{candidate_files}`
-            candidate_diffs = candidates_raw.split(/(?=^--- )/)
-
-            candidate_diffs.map! do |diff|
-              ver = diff.match(%r{^--- raw/(?<ver>\d+)})[:ver]
-              diff.sub!(%r{^--- raw/.*?\n}, "")
-              diff.sub!(%r{^\+\+\+ raw/.*?\n}, "")
-              [ver, diff]
-            end
-
-            best_ver = candidate_diffs[0].first
-            best_diff = candidate_diffs[0].last
-            best_diff_size = candidate_diffs[0].last.size
-            candidate_diffs.each do |(ver, diff)|
-              next unless diff.size <= best_diff_size
-
-              best_ver = ver
-              best_diff = diff
-              best_diff_size = diff.size
-            end
-
-            if best_diff.size < File.stat(target_file).size
-              puts("Creating patch for #{target_ver} from: #{best_ver}")
-              File.write("delta/#{best_ver}_#{target_ver}.patch", best_diff)
-            else
-              puts("No good delta for #{target_ver}, copying it as-is")
-              cp(target_file, "delta/#{target_ver}")
-            end
-          end
+          compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
         end
       end
     end
