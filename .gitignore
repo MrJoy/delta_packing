@@ -4,6 +4,3 @@ delta/*
 !delta/.keep
 out/*
 !out/.keep
-candidate/*
-!candidate/.keep
-candidate_*/
