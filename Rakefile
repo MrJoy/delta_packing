@@ -33,7 +33,7 @@ task :compute_deltas do
           src_file    = "raw/#{candidate_ver}"
           out_file    = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.patch"
           # N.B. Using system to avoid noisey output
-          res = system "diff --minimal --unified=1 #{src_file} #{target_file} | perl -pse 's|^--- #{src_file}|--- source|' | perl -pse 's|^\\+{3} #{target_file}|+++ dest|' > #{out_file}"
+          res = system("diff --minimal --unified=1 #{src_file} #{target_file} | perl -pse 's|^--- #{src_file}|--- source|' | perl -pse 's|^\\+{3} #{target_file}|+++ dest|' > #{out_file}")
           if !res
             STDERR.puts("Failed to compute delta for #{target_ver} -> #{candidate_ver}")
             exit(1)
