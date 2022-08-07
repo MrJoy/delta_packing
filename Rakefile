@@ -56,7 +56,9 @@ task :compute_deltas do
   loop do
     target_ver = versions[counter]
     if counter == 0
-      cp "raw/#{target_ver}", "delta/#{target_ver}"
+      dst = "delta/#{target_ver}"
+      cp("raw/#{target_ver}", dst) unless File.exists?(dst)
+
       counter += 1
       next
     end
