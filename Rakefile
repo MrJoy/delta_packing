@@ -11,7 +11,6 @@ task :compute_deltas do
 
   puts "Computing deltas for #{versions.size} versions"
 
-  system "rm -f delta/*" # Using system to avoid noisy output, and to not touch .keep
   system "rm -f candidate_*/*" # Using system to avoid noisy output
 
   work_queue = Queue.new
@@ -23,6 +22,11 @@ task :compute_deltas do
         job = work_queue.pop
         break if !job
         target_ver, candidate_vers = *job
+
+        if File.exists?("delta/#{target_ver}") || FileList["delta/*_#{target_ver}.bsdiff"].size > 0
+          # puts "Skipping #{target_ver} because it already has a delta"
+          next
+        end
 
         puts "Computing delta candidates for #{target_ver}"
 
