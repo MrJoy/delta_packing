@@ -51,6 +51,7 @@ task :compute_deltas do
     end
   end
 
+  # TODO: If we go over this in reverse, we can bail as soon as we see a delta for a version.
   counter = 0
   loop do
     target_ver = versions[counter]
