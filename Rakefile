@@ -85,8 +85,13 @@ task :compute_deltas do
       next
     end
 
-    candidate_vers = versions[(counter+1)..(counter+1+DELTA_LIMIT)]
-    work_queue.push([target_ver, candidate_vers])
+    if File.stat("raw/#{target_ver}").size == 0
+      puts "Found zero-length file, marking it accordingly: #{target_ver}"
+      File.write("delta/#{target_ver}", "")
+    else
+      candidate_vers = versions[(counter+1)..(counter+1+DELTA_LIMIT)]
+      work_queue.push([target_ver, candidate_vers])
+    end
 
     counter += 1
   end
