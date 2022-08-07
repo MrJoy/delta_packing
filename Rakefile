@@ -9,6 +9,17 @@ task :compute_deltas do
 
   puts "Computing deltas for #{versions.size} versions"
 
+  version_shas = nil
+  sha_versions = {}
+  cd "raw" do
+    sha_list = `sha256sum *`.split("\n").map(&:chomp).map(&:split).map(&:reverse)
+    version_shas = sha_list.to_h
+    sha_list.each do |(ver, sha)|
+      sha_versions[sha] ||= []
+      sha_versions[sha] << ver
+    end
+  end
+
   work_queue = Queue.new
   thread_pool = (1..POOL_SIZE).map do |i|
     Thread.new do
@@ -25,11 +36,9 @@ task :compute_deltas do
 
         candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(' ')
 
-        # TODO: See if it's faster to just do MD5s or some such here...
-        nmf_raw = `diff --unified=1 --brief --to-file=#{target_file} #{candidate_files}`
-        nmf_lines = nmf_raw.split("\n").map(&:chomp)
-        non_matching_versions = nmf_lines.map { |line| line.split(' ', 3)[1].split('/').last }
-        zeros = candidate_vers - non_matching_versions
+        target_sha = version_shas[target_ver]
+        target_ver_i = target_ver.to_i
+        zeros = sha_versions[target_sha].reject { |v| v == target_ver || v.to_i > target_ver_i }
         if zeros.length > 0
           best_candidate = zeros.first
           puts "Found identical candidate for #{target_ver}: #{best_candidate}"
