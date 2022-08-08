@@ -85,7 +85,6 @@ def zero_candidate_for(target_ver, version_shas, sha_versions)
   zeros.first
 end
 
-
 def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
   # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
 
