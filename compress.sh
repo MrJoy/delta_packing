@@ -33,6 +33,8 @@ IFS=$'\n\t'
 # cases.  With a significantly larger dataset, ztsd and xz both beat lzip on the raw dataset by
 # about 10% -- but not on the delta chain dataset.  Despite moving away from bsdiff (which does
 # bzip2 compression of its own), lzip continues to the be the winnder for the delta chain.
+
+# rm out/*.tar.*
 # for ARCHIVE in $(cd out; ls *.tar); do
 #   echo "Compressing out/${ARCHIVE}"
 
