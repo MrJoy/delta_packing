@@ -64,7 +64,9 @@ end
 
 def compute_candidates(target_ver, candidate_vers)
   candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(" ")
+  # rubocop:disable EightyFourCodes/CommandLiteralInjection
   candidates_raw = `diff --minimal --unified=0 --to-file=raw/#{target_ver} #{candidate_files}`
+  # rubocop:enable EightyFourCodes/CommandLiteralInjection
   candidate_diffs = candidates_raw.split(/(?=^--- )/)
 
   candidate_diffs.map! do |diff|
