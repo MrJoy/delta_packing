@@ -6,3 +6,4 @@ out/*
 !out/.keep
 unpacked/*
 !unpacked/.keep
+candidate_*/

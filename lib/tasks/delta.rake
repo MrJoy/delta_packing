@@ -39,12 +39,12 @@ end
 
 def null_patch!(from_ver, target_ver)
   puts("Found identical candidate for #{target_ver}: #{from_ver}")
-  File.write("delta/#{from_ver}_#{target_ver}.patch", "")
+  File.write("delta/#{from_ver}_#{target_ver}.xdelta", "")
 end
 
 def record_patch!(from_ver, target_ver, patch)
   puts("Creating patch for #{target_ver} from: #{from_ver}")
-  File.write("delta/#{from_ver}_#{target_ver}.patch", patch)
+  File.write("delta/#{from_ver}_#{target_ver}.xdelta", patch)
 end
 
 def find_best_delta(candidate_diffs)
@@ -62,19 +62,26 @@ def find_best_delta(candidate_diffs)
   [best_ver, best_diff]
 end
 
-def compute_candidates(target_ver, candidate_vers)
-  candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(" ")
-  # rubocop:disable EightyFourCodes/CommandLiteralInjection
-  candidates_raw = `diff --minimal --unified=0 --to-file=raw/#{target_ver} #{candidate_files}`
-  # rubocop:enable EightyFourCodes/CommandLiteralInjection
-  candidate_diffs = candidates_raw.split(/(?=^--- )/)
+def compute_candidates(thread_id, target_ver, candidate_vers)
+  system("rm -f candidate_#{thread_id}/*")
+  target_file = "raw/#{target_ver}"
 
-  candidate_diffs.map! do |diff|
-    ver = diff.match(%r{^--- raw/(?<ver>\d+)})[:ver]
-    diff.sub!(%r{^--- raw/.*?\n}, "")
-    diff.sub!(%r{^\+\+\+ raw/.*?\n}, "")
-    [ver, diff]
-  end
+  candidate_diffs =
+    candidate_vers.map do |candidate_ver|
+      candidate_file = "raw/#{candidate_ver}"
+      candidate_patch = "candidate_#{thread_id}/#{candidate_ver}_#{target_ver}.xdelta"
+      # TODO: Add `-n` as well?
+      # TODO: `-N`?
+      # TODO: `-0`?
+      # TODO: `-S` (how do we use this to disable?)?
+      # TODO: Is `-D` doing what I think it is?
+      result = system("xdelta3 -e -D -s #{candidate_file} #{target_file} #{candidate_patch}")
+      exit(1) if !result
+      diff = File.read(candidate_patch)
+      File.delete(candidate_patch)
+
+      [candidate_ver, diff]
+    end
 
   candidate_diffs
 end
@@ -118,7 +125,7 @@ def enqueue_work!(versions, work_queue)
   end
 end
 
-def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
+def compute_delta!(thread_id, target_ver, candidate_vers, version_shas, sha_versions)
   # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
 
   puts("Computing delta candidates for #{target_ver}")
@@ -131,7 +138,7 @@ def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
     return
   end
 
-  best_ver, best_diff = find_best_delta(compute_candidates(target_ver, candidate_vers))
+  best_ver, best_diff = find_best_delta(compute_candidates(thread_id, target_ver, candidate_vers))
 
   if best_diff.size < File.stat(target_file).size
     record_patch!(best_ver, target_ver, best_diff)
@@ -155,14 +162,15 @@ task :delta do
 
   work_queue = Queue.new
   thread_pool =
-    (1..POOL_SIZE).map do
+    (1..POOL_SIZE).map do |thread_id|
+      sh("mkdir -p candidate_#{thread_id}")
       Thread.new do
         loop do
           job = work_queue.pop
           break unless job
 
           target_ver, candidate_vers = *job
-          compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
+          compute_delta!(thread_id, target_ver, candidate_vers, version_shas, sha_versions)
         end
       end
     end
