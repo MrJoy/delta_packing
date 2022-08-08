@@ -2,10 +2,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-ARTICLE="Transformers"
 COUNT=5000
+ARTICLE="Transformers"
 # ARTICLE="Recession"
-# COUNT=5000
+# ARTICLE="United_States"
 
 # N.B. Not handling pagination here, and having such a high limit is quite slow.
 echo "Fetching list of versions..."
