@@ -7,23 +7,27 @@ IFS=$'\n\t'
 #
 # For the delta chain (initial ver + diff (minimal, unified, 0-context) snapshots):
 # % ls -laS out/delta*
-# -rw-r--r--  1 jonathonfrisby  staff  9393664 Aug  7 16:02 out/delta.tar
-# -rw-r--r--  1 jonathonfrisby  staff  1342244 Aug  7 16:05 out/delta.tar.lz4
-# -rw-r--r--  1 jonathonfrisby  staff   596644 Aug  7 16:05 out/delta.tar.bz2
-# -rw-r--r--  1 jonathonfrisby  staff   268442 Aug  7 16:13 out/delta.tar.zstd_1
-# -rw-r--r--  1 jonathonfrisby  staff   259151 Aug  7 16:13 out/delta.tar.zstd_0
-# -rw-r--r--  1 jonathonfrisby  staff   248564 Aug  7 16:05 out/delta.tar.xz
-# -rw-r--r--  1 jonathonfrisby  staff   247763 Aug  7 16:05 out/delta.tar.lzip
+# -rw-r--r--  1 jonathonfrisby  staff  9393664 Aug  7 18:36 out/delta.tar
+# -rw-r--r--  1 jonathonfrisby  staff  1376733 Aug  7 18:36 out/delta.tar.zip
+# -rw-r--r--  1 jonathonfrisby  staff  1373471 Aug  7 18:36 out/delta.tar.gz
+# -rw-r--r--  1 jonathonfrisby  staff  1343476 Aug  7 18:36 out/delta.tar.lz4
+# -rw-r--r--  1 jonathonfrisby  staff   598998 Aug  7 18:36 out/delta.tar.bz2
+# -rw-r--r--  1 jonathonfrisby  staff   266948 Aug  7 18:36 out/delta.tar.zstd_1
+# -rw-r--r--  1 jonathonfrisby  staff   257452 Aug  7 18:36 out/delta.tar.zstd_0
+# -rw-r--r--  1 jonathonfrisby  staff   246660 Aug  7 18:36 out/delta.tar.xz
+# -rw-r--r--  1 jonathonfrisby  staff   245945 Aug  7 18:36 out/delta.tar.lzip
 #
 # For the raw data:
 # % ls -laS out/raw*
-# -rw-r--r--  1 jonathonfrisby  staff  154996224 Aug  7 16:02 out/raw.tar
-# -rw-r--r--  1 jonathonfrisby  staff   20021279 Aug  7 16:07 out/raw.tar.lz4
-# -rw-r--r--  1 jonathonfrisby  staff    9531127 Aug  7 16:07 out/raw.tar.bz2
-# -rw-r--r--  1 jonathonfrisby  staff     349469 Aug  7 16:08 out/raw.tar.lzip
-# -rw-r--r--  1 jonathonfrisby  staff     313540 Aug  7 16:07 out/raw.tar.xz
-# -rw-r--r--  1 jonathonfrisby  staff     311031 Aug  7 16:08 out/raw.tar.zstd_0
-# -rw-r--r--  1 jonathonfrisby  staff     298842 Aug  7 16:11 out/raw.tar.zstd_1
+# -rw-r--r--  1 jonathonfrisby  staff  154996224 Aug  7 18:39 out/raw.tar
+# -rw-r--r--  1 jonathonfrisby  staff   46309069 Aug  7 18:39 out/raw.tar.gz
+# -rw-r--r--  1 jonathonfrisby  staff   46238590 Aug  7 18:39 out/raw.tar.zip
+# -rw-r--r--  1 jonathonfrisby  staff   20021279 Aug  7 18:40 out/raw.tar.lz4
+# -rw-r--r--  1 jonathonfrisby  staff    9531127 Aug  7 18:40 out/raw.tar.bz2
+# -rw-r--r--  1 jonathonfrisby  staff     349469 Aug  7 18:41 out/raw.tar.lzip
+# -rw-r--r--  1 jonathonfrisby  staff     313540 Aug  7 18:40 out/raw.tar.xz
+# -rw-r--r--  1 jonathonfrisby  staff     311031 Aug  7 18:41 out/raw.tar.zstd_0
+# -rw-r--r--  1 jonathonfrisby  staff     298842 Aug  7 18:41 out/raw.tar.zstd_1
 #
 # Early testing with a small number of versions (52) had lzip as the unambiguous winner in all
 # cases.  With a significantly larger dataset, ztsd and xz both beat lzip on the raw dataset by
@@ -32,6 +36,8 @@ IFS=$'\n\t'
 # for ARCHIVE in $(cd out; ls *.tar); do
 #   echo "Compressing out/${ARCHIVE}"
 
+#   cat "out/$ARCHIVE" | gzip -9 - > "out/${ARCHIVE}.gz"
+#   zip -9 "out/${ARCHIVE}.zip" "out/$ARCHIVE"
 #   cat "out/$ARCHIVE" | xz -9 --extreme --threads=0 > "out/${ARCHIVE}.xz"
 #   cat "out/$ARCHIVE" | lz4 --best --sparse > "out/${ARCHIVE}.lz4"
 #   cat "out/$ARCHIVE" | bzip2 -9 > "out/${ARCHIVE}.bz2"
