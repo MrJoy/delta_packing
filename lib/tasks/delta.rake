@@ -6,7 +6,7 @@ POOL_SIZE = 8 # Number of threads to use for parallel processing
 def sha_data_for_dir(dir)
   version_shas = nil
   sha_versions = {}
-  cd "raw" do
+  cd(dir) do
     sha_list = `sha256sum *`.split("\n").map(&:chomp).map(&:split).map(&:reverse)
     version_shas = sha_list.to_h
     sha_list.each do |(ver, sha)|
