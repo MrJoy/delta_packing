@@ -58,22 +58,6 @@ Layout/SingleLineBlockChain:
 Lint/ConstantResolution:
   Enabled: false
 
-# I really don't want to do this, but I'm faced with an annoying problem: The annotate gem can
-# litter models/specs/factories with lines that are pretty arbitrarily long.  I can tell annotate to
-# prefix/suffix _all_ the blocks it generates with disable markers for Layout/LineLength, but only
-# some of the blocks will _need_ that, leading to failures on this cop.  If, instead, I add the
-# disable markers where needed causes annotate to become rather confused when it rewrites a block
-# that has them:  It tends to leave both the markers above the newly-written block.
-# So my choices basically come down to:
-# 1. Do nothing, and just have unresolves Layout/LineLength errors in a bunch of places.
-# 2. Manually put markers where needed, and manually correct what annotate does to the files where
-#    they're needed.
-# 3. Disable Layout/LineLength for the relevant files, try to remember to add exceptions when new
-#    cases arise, and try to remember to manually keep an eye on line length for code in those files
-# So, with that in mind, I'm taking what I feel is the lesser of several evils:
-Lint/RedundantCopDisableDirective:
-  Enabled: false
-
 
 ####################################################################################################
 # Metric Cops
