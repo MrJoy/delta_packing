@@ -90,55 +90,7 @@ def zero_candidate_for(target_ver, version_shas, sha_versions)
   zeros.first
 end
 
-def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
-  # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
-
-  puts("Computing delta candidates for #{target_ver}")
-
-  target_file = "raw/#{target_ver}"
-
-  zero_candidate = zero_candidate_for(target_ver, version_shas, sha_versions)
-  if zero_candidate
-    null_patch!(zero_candidate, target_ver)
-    return
-  end
-
-  best_ver, best_diff = find_best_delta(compute_candidates(target_ver, candidate_vers))
-
-  if best_diff.size < File.stat(target_file).size
-    record_patch!(best_ver, target_ver, best_diff)
-    return
-  end
-
-  copy_as_is!(target_ver)
-end
-
-desc "Compute delta chain"
-# rubocop:disable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
-task :delta do
-  versions = FileList["raw/*"]
-  versions.map! { |f| Integer(f.split("/").last, 10) }
-  versions.sort!
-  versions.map!(&:to_s)
-
-  puts "Computing deltas for #{versions.size} versions"
-
-  version_shas, sha_versions = sha_data_for_dir("raw")
-
-  work_queue = Queue.new
-  thread_pool =
-    (1..POOL_SIZE).map do
-      Thread.new do
-        loop do
-          job = work_queue.pop
-          break unless job
-
-          target_ver, candidate_vers = *job
-          compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
-        end
-      end
-    end
-
+def enqueue_work!(versions, work_queue)
   counter = -1
   versions = versions.reverse
   loop do
@@ -164,9 +116,61 @@ task :delta do
     candidate_vers = versions[(counter + 1)..(counter + 1 + DELTA_LIMIT)]
     work_queue.push([target_ver, candidate_vers])
   end
+end
+
+def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
+  # TODO: Check if the target_ver is in the candidate_vers as a sanity check!
+
+  puts("Computing delta candidates for #{target_ver}")
+
+  target_file = "raw/#{target_ver}"
+
+  zero_candidate = zero_candidate_for(target_ver, version_shas, sha_versions)
+  if zero_candidate
+    null_patch!(zero_candidate, target_ver)
+    return
+  end
+
+  best_ver, best_diff = find_best_delta(compute_candidates(target_ver, candidate_vers))
+
+  if best_diff.size < File.stat(target_file).size
+    record_patch!(best_ver, target_ver, best_diff)
+    return
+  end
+
+  copy_as_is!(target_ver)
+end
+
+desc "Compute delta chain"
+# rubocop:disable ThreadSafety/NewThread
+task :delta do
+  versions = FileList["raw/*"]
+  versions.map! { |f| Integer(f.split("/").last, 10) }
+  versions.sort!
+  versions.map!(&:to_s)
+
+  puts "Computing deltas for #{versions.size} versions"
+
+  version_shas, sha_versions = sha_data_for_dir("raw")
+
+  work_queue = Queue.new
+  thread_pool =
+    (1..POOL_SIZE).map do
+      Thread.new do
+        loop do
+          job = work_queue.pop
+          break unless job
+
+          target_ver, candidate_vers = *job
+          compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
+        end
+      end
+    end
+
+  enqueue_work!(versions, work_queue)
 
   puts "Waiting for threads to finish"
   POOL_SIZE.times { work_queue.push(false) }
   thread_pool.each(&:join)
 end
-# rubocop:enable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
+# rubocop:enable ThreadSafety/NewThread
