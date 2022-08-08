@@ -7,7 +7,10 @@ def sha_data_for_dir(dir)
   version_shas = nil
   sha_versions = {}
   cd(dir) do
-    sha_list = `sha256sum *`.split("\n").map(&:chomp).map(&:split).map(&:reverse)
+    sha_list = `sha256sum *`.split("\n")
+    sha_list.map!(&:chomp)
+    sha_list.map!(&:split)
+    sha_list.map!(&:reverse)
     version_shas = sha_list.to_h
     sha_list.each do |(ver, sha)|
       sha_versions[sha] ||= []
@@ -18,7 +21,7 @@ def sha_data_for_dir(dir)
   [version_shas, sha_versions]
 end
 
-def have_delta_for?(version)
+def delta_for?(version)
   # TODO: We can speed this up by getting the list of all existing deltas once and using it to
   # TODO: determine what we don't need to compute.
   File.exist?("delta/#{version}") || FileList["delta/*_#{version}.patch"].size.positive?
@@ -92,8 +95,6 @@ def compute_delta!(target_ver, candidate_vers, version_shas, sha_versions)
 
   target_file = "raw/#{target_ver}"
 
-  candidate_files = candidate_vers.map { |fname| "raw/#{fname}" }.join(" ")
-
   zero_candidate = zero_candidate_for(target_ver, version_shas, sha_versions)
   if zero_candidate
     null_patch!(zero_candidate, target_ver)
@@ -113,7 +114,10 @@ end
 desc "Compute delta chain"
 # rubocop:disable EightyFourCodes/CommandLiteralInjection,ThreadSafety/NewThread,Metrics/BlockLength
 task :delta do
-  versions = FileList["raw/*"].map { |f| Integer(f.split("/").last, 10) }.sort.map(&:to_s)
+  versions = FileList["raw/*"]
+  versions.map! { |f| Integer(f.split("/").last, 10) }
+  versions.sort!
+  versions.map!(&:to_s)
 
   puts "Computing deltas for #{versions.size} versions"
 
@@ -121,9 +125,8 @@ task :delta do
 
   work_queue = Queue.new
   thread_pool =
-    (1..POOL_SIZE).map do |i|
+    (1..POOL_SIZE).map do
       Thread.new do
-        thread_id = i
         loop do
           job = work_queue.pop
           break unless job
@@ -142,7 +145,7 @@ task :delta do
 
     target_ver = versions[counter]
 
-    break if have_delta_for?(target_ver)
+    break if delta_for?(target_ver)
 
     if counter == versions.size - 1
       copy_as_is!(target_ver)
