@@ -75,7 +75,7 @@ def compute_candidates(thread_id, target_ver, candidate_vers)
       # TODO: `-0`?
       # TODO: `-S` (how do we use this to disable?)?
       # TODO: Is `-D` doing what I think it is?
-      result = system("xdelta3 -e -D -s #{candidate_file} #{target_file} #{candidate_patch}")
+      result = system("xdelta3 encode -N -0 -D -s #{candidate_file} #{target_file} #{candidate_patch}")
       exit(1) if !result
       diff = File.read(candidate_patch)
       File.delete(candidate_patch)

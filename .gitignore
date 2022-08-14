@@ -7,3 +7,4 @@ out/*
 unpacked/*
 !unpacked/.keep
 candidate_*/
+raw.*
